@@ -12,7 +12,7 @@ export async function POST(req) {
       );
     }
 
-    // الطلب المباشر لـ Gemini API دون الاعتماد على مكتبات خروجية قديمة
+    // استخدام المسار المباشر المحدث للموديل
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
@@ -22,7 +22,7 @@ export async function POST(req) {
         },
         body: JSON.stringify({
           system_instruction: {
-            parts: [{ text: systemPrompt }]
+            parts: [{ text: systemPrompt || '' }]
           },
           contents: [
             {
@@ -36,9 +36,9 @@ export async function POST(req) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Gemini API Error Data:', data);
+      console.error('Gemini API Response Error:', data);
       return NextResponse.json(
-        { error: data.error?.message || 'حدث خطأ أثناء التواصل مع الذكاء الاصطناعي' },
+        { error: data.error?.message || 'خطأ من السيرفر الخاص بـ Gemini' },
         { status: response.status }
       );
     }
@@ -49,7 +49,7 @@ export async function POST(req) {
   } catch (error) {
     console.error('Server Error:', error);
     return NextResponse.json(
-      { error: `حدث خطأ في الخادم: ${error.message}` },
+      { error: `خطأ في الخادم: ${error.message}` },
       { status: 500 }
     );
   }
