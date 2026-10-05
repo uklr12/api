@@ -19,7 +19,7 @@ export async function POST(req) {
         'Authorization': `Bearer ${groqKey.trim()}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'gemma2-9b-it', // نموذج مجاني ومستقر تماماً وموجود في كل حسابات Groq
         messages: [
           { role: 'system', content: systemPrompt || 'You are a helpful assistant.' },
           { role: 'user', content: userInput },
