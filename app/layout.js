@@ -1,3 +1,4 @@
+<meta name="google-site-verification" content="vlitXfG8D5yMX-IFKwWP0ClVi5LZ_cvdT_q_XcBiENI" />
 import './globals.css';
 import Footer from './components/Footer';
 
