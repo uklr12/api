@@ -14,27 +14,27 @@ export async function POST(req) {
       );
     }
 
-    // استخدام Google Gemini API
+    // تهيئة Google Gemini API
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    const prompt = `${systemPrompt}\n\nUser: ${userInput}`;
+    // استخدام الموديل المستقر وتمرير التعليمات في systemInstruction
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      systemInstruction: systemPrompt,
+    });
 
-    const result = await model.generateContent(prompt);
+    // إرسال مدخلات المستخدم فقط بشكل مباشر
+    const result = await model.generateContent(userInput);
     const responseText = result.response.text() || 'No response';
 
     return NextResponse.json({ result: responseText });
   } catch (error) {
-    console.error('API Error Details:');
-    console.error('Error Message:', error.message);
-    console.error('Error Stack:', error.stack);
-    console.error('Full Error Object:', JSON.stringify(error, null, 2));
+    console.error('API Error Details:', error);
     
     return NextResponse.json(
       { 
         error: `An error occurred: ${error.message}`,
-        details: error.stack,
-        fullError: JSON.stringify(error, null, 2)
+        details: error.stack
       },
       { status: 500 }
     );
