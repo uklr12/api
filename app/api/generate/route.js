@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(req) {
-  const errors = {};
-
   try {
     const { userInput, systemPrompt } = await req.json();
 
-    // 1. Groq API
+    // 1. Groq API (باستخدام النموذج المعياري النشط)
     const groqKey = process.env.GROQ_API_KEY;
     if (groqKey) {
       try {
@@ -17,7 +15,7 @@ export async function POST(req) {
             'Authorization': `Bearer ${groqKey.trim()}`,
           },
           body: JSON.stringify({
-            model: 'llama-3.1-8b-instant',
+            model: 'llama-3.3-70b-versatile',
             messages: [
               { role: 'system', content: systemPrompt || 'You are a helpful assistant.' },
               { role: 'user', content: userInput },
@@ -29,15 +27,12 @@ export async function POST(req) {
         if (res.ok && data.choices?.[0]?.message?.content) {
           return NextResponse.json({ result: data.choices[0].message.content });
         }
-        errors.Groq = data.error?.message || JSON.stringify(data);
       } catch (err) {
-        errors.Groq = `Fetch Error: ${err.message}`;
+        console.error('Groq error:', err.message);
       }
-    } else {
-      errors.Groq = 'Missing key';
     }
 
-    // 2. OpenRouter API
+    // 2. OpenRouter API (باستخدام نموذج Llama المجاني والمتاح)
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     if (openRouterKey) {
       try {
@@ -48,7 +43,7 @@ export async function POST(req) {
             'Authorization': `Bearer ${openRouterKey.trim()}`,
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.0-flash-lite-001:free',
+            model: 'meta-llama/llama-3.3-70b-instruct:free',
             messages: [
               { role: 'system', content: systemPrompt || '' },
               { role: 'user', content: userInput },
@@ -60,25 +55,23 @@ export async function POST(req) {
         if (res.ok && data.choices?.[0]?.message?.content) {
           return NextResponse.json({ result: data.choices[0].message.content });
         }
-        errors.OpenRouter = data.error?.message || JSON.stringify(data);
       } catch (err) {
-        errors.OpenRouter = `Fetch Error: ${err.message}`;
+        console.error('OpenRouter error:', err.message);
       }
-    } else {
-      errors.OpenRouter = 'Missing key';
     }
 
-    // 3. Gemini API
+    // 3. Gemini API (باستخدام نموذج gemini-3.8-flash الموصى به من جوجل)
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey) {
       try {
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey.trim()}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${geminiKey.trim()}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [{ parts: [{ text: `${systemPrompt ? systemPrompt + '\n\n' : ''}${userInput}` }] }],
+              system_instruction: { parts: [{ text: systemPrompt || '' }] },
+              contents: [{ parts: [{ text: userInput }] }],
             }),
           }
         );
@@ -87,23 +80,20 @@ export async function POST(req) {
         if (res.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
           return NextResponse.json({ result: data.candidates[0].content.parts[0].text });
         }
-        errors.Gemini = data.error?.message || JSON.stringify(data);
       } catch (err) {
-        errors.Gemini = `Fetch Error: ${err.message}`;
+        console.error('Gemini error:', err.message);
       }
-    } else {
-      errors.Gemini = 'Missing key';
     }
 
     return NextResponse.json(
-      { error: 'All AI services failed.', details: errors },
-      { status: 400 }
+      { error: 'All AI models are currently busy. Please try again in a moment.' },
+      { status: 429 }
     );
 
   } catch (error) {
     return NextResponse.json(
       { error: `Server error: ${error.message}` },
-      { status: 400 }
+      { status: 500 }
     );
   }
 }
