@@ -4,7 +4,7 @@ export async function POST(req) {
   try {
     const { userInput, systemPrompt } = await req.json();
 
-    // 1. Groq API (محدث بأسماء النماذج المجانية النشطة)
+    // 1. المحاولة الأولى: Groq API
     const groqKey = process.env.GROQ_API_KEY;
     if (groqKey) {
       try {
@@ -15,7 +15,7 @@ export async function POST(req) {
             'Authorization': `Bearer ${groqKey.trim()}`,
           },
           body: JSON.stringify({
-            model: 'llama3-70b-8192', // النموذج المجاني والشغال في Groq
+            model: 'llama-3.1-70b-versatile',
             messages: [
               { role: 'system', content: systemPrompt || 'You are a helpful assistant.' },
               { role: 'user', content: userInput },
@@ -32,7 +32,7 @@ export async function POST(req) {
       }
     }
 
-    // 2. OpenRouter API (محدث بأسماء النماذج المجانية 100%)
+    // 2. المحاولة الثانية: OpenRouter API (استخدام نموذج Mistral/Qwen المجاني)
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     if (openRouterKey) {
       try {
@@ -43,7 +43,7 @@ export async function POST(req) {
             'Authorization': `Bearer ${openRouterKey.trim()}`,
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.0-flash-exp:free', // نموذج مجاني وممتاز عبر OpenRouter
+            model: 'qwen/qwen-2.5-72b-instruct:free',
             messages: [
               { role: 'system', content: systemPrompt || '' },
               { role: 'user', content: userInput },
@@ -60,18 +60,17 @@ export async function POST(req) {
       }
     }
 
-    // 3. Gemini API (المزود الأساسي)
+    // 3. المحاولة الثالثة: Gemini API
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey) {
       try {
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey.trim()}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey.trim()}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              system_instruction: { parts: [{ text: systemPrompt || '' }] },
-              contents: [{ parts: [{ text: userInput }] }],
+              contents: [{ parts: [{ text: `${systemPrompt ? systemPrompt + '\n\n' : ''}${userInput}` }] }],
             }),
           }
         );
