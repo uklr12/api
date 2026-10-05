@@ -4,9 +4,11 @@ export async function POST(req) {
   const errors = {};
 
   try {
-    const { userInput, systemPrompt } = await req.json();
+    const body = await req.json();
+    const userInput = body?.userInput || '';
+    const systemPrompt = body?.systemPrompt || '';
 
-    // 1. تجربة Groq
+    // 1. Groq API
     const groqKey = process.env.GROQ_API_KEY;
     if (groqKey) {
       try {
@@ -34,10 +36,10 @@ export async function POST(req) {
         errors.Groq = `Fetch Error: ${err.message}`;
       }
     } else {
-      errors.Groq = 'GROQ_API_KEY is missing in Vercel environment variables';
+      errors.Groq = 'GROQ_API_KEY environment variable is missing in Vercel.';
     }
 
-    // 2. تجربة OpenRouter
+    // 2. OpenRouter API
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     if (openRouterKey) {
       try {
@@ -65,10 +67,10 @@ export async function POST(req) {
         errors.OpenRouter = `Fetch Error: ${err.message}`;
       }
     } else {
-      errors.OpenRouter = 'OPENROUTER_API_KEY is missing in Vercel environment variables';
+      errors.OpenRouter = 'OPENROUTER_API_KEY environment variable is missing in Vercel.';
     }
 
-    // 3. تجربة Gemini
+    // 3. Gemini API
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey) {
       try {
@@ -93,22 +95,22 @@ export async function POST(req) {
         errors.Gemini = `Fetch Error: ${err.message}`;
       }
     } else {
-      errors.Gemini = 'GEMINI_API_KEY is missing in Vercel environment variables';
+      errors.Gemini = 'GEMINI_API_KEY environment variable is missing in Vercel.';
     }
 
-    // إرجاع الأخطاء المفصلة لجميع المزودات معاً
+    // إرجاع الأخطاء مجمعة بحالة 400 بدلاً من 500 ليقرأها المتصفح بوضوح
     return NextResponse.json(
       { 
-        error: 'All AI services failed.',
+        error: 'All AI services failed to execute.',
         details: errors 
       },
-      { status: 500 }
+      { status: 400 }
     );
 
   } catch (error) {
     return NextResponse.json(
-      { error: `Server catch error: ${error.message}` },
-      { status: 500 }
+      { error: `Server internal crash: ${error.message}` },
+      { status: 400 }
     );
   }
 }
