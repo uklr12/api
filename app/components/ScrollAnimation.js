@@ -7,25 +7,33 @@ export default function ScrollAnimation({ children, className = '', delay = 0 })
   const ref = useRef(null);
 
   useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
+          observer.unobserve(entry.target);
         }
       },
       {
         threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px',
+        rootMargin: '0px 0px -100px 0px',
       }
     );
 
-    if (ref.current) {
-      observer.observe(ref.current);
+    observer.observe(element);
+
+    // Check if element is already visible on mount
+    if (element.getBoundingClientRect().top < window.innerHeight) {
+      setIsVisible(true);
+      observer.unobserve(element);
     }
 
     return () => {
-      if (ref.current) {
-        observer.unobserve(ref.current);
+      if (element) {
+        observer.unobserve(element);
       }
     };
   }, []);
