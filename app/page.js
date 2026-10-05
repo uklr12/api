@@ -125,6 +125,16 @@ export default function HomePage() {
 
         {/* Section 3: SEO Content (Bottom - for Google SEO) */}
         <SEOContent />
+
+        {/* Link to Arabic SEO Page */}
+        <div className="text-center mt-8 mb-8">
+          <Link
+            href="/arabic-seo"
+            className="inline-block text-blue-600 hover:text-blue-800 font-semibold underline"
+          >
+            Read Arabic SEO Content →
+          </Link>
+        </div>
       </div>
     </main>
   );
