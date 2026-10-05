@@ -19,7 +19,7 @@ export async function POST(req) {
         'Authorization': `Bearer ${groqKey.trim()}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant', 
+        model: 'openai/gpt-oss-20b', // أحدث نموذج مستقر وقوي وسريع جداً على Groq
         messages: [
           { role: 'system', content: systemPrompt || 'You are a helpful assistant.' },
           { role: 'user', content: userInput },
@@ -33,7 +33,6 @@ export async function POST(req) {
       return NextResponse.json({ result: data.choices[0].message.content });
     }
 
-    // إذا حدث خطأ مجدداً، سنعيده لنراه بوضوح
     return NextResponse.json(
       { error: data.error?.message || 'Failed to generate content from Groq.' },
       { status: 400 }
