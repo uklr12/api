@@ -7,14 +7,14 @@ export async function POST(req) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'مفتاح GEMINI_API_KEY غير موجود في متغيرات البيئة' },
+        { error: 'GEMINI_API_KEY غير موجود في متغيرات البيئة' },
         { status: 500 }
       );
     }
 
-    // استخدام المسار المباشر المحدث للموديل
+    // تم تغيير اسم الموديل إلى gemini-2.0-flash المعتمد حالياً
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
@@ -36,20 +36,20 @@ export async function POST(req) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Gemini API Response Error:', data);
+      console.error('Gemini Error:', data);
       return NextResponse.json(
-        { error: data.error?.message || 'خطأ من السيرفر الخاص بـ Gemini' },
+        { error: data.error?.message || 'خطأ في الاستجابة من جوجل' },
         { status: response.status }
       );
     }
 
-    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'لم يتم إنشاء نص';
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'لم يتم استلام نص';
 
     return NextResponse.json({ result: responseText });
   } catch (error) {
     console.error('Server Error:', error);
     return NextResponse.json(
-      { error: `خطأ في الخادم: ${error.message}` },
+      { error: `حدث خطأ في الخادم: ${error.message}` },
       { status: 500 }
     );
   }
