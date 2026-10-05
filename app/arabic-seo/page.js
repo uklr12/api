@@ -221,14 +221,12 @@ export default function AIAppsPage() {
             <p className="text-blue-100 mb-8 leading-relaxed text-lg max-w-2xl">
               Let's work together to build an innovative AI application using Next.js that puts you at the top. Our team of experts is ready to transform your vision into a successful digital product.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold hover:bg-blue-50 transition-colors duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                Contact Us Now
-              </button>
-              <button className="border-2 border-white text-white px-8 py-4 rounded-xl font-bold hover:bg-white hover:text-blue-600 transition-colors duration-300 transform hover:-translate-y-0.5">
-                Book Free Consultation
-              </button>
-            </div>
+            <Link
+              href="/contact"
+              className="inline-block bg-white text-blue-600 px-8 py-4 rounded-xl font-bold hover:bg-blue-50 transition-colors duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-center"
+            >
+              Contact Us Now
+            </Link>
           </div>
         </section>
       </div>
