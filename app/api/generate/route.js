@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(req) {
+  const errors = {};
+
   try {
     const { userInput, systemPrompt } = await req.json();
 
-    // 1. المحاولة الأولى: Groq API
+    // 1. Groq API
     const groqKey = process.env.GROQ_API_KEY;
     if (groqKey) {
       try {
@@ -27,12 +29,15 @@ export async function POST(req) {
         if (res.ok && data.choices?.[0]?.message?.content) {
           return NextResponse.json({ result: data.choices[0].message.content });
         }
+        errors.Groq = data.error?.message || JSON.stringify(data);
       } catch (err) {
-        console.error('Groq error:', err.message);
+        errors.Groq = `Fetch Error: ${err.message}`;
       }
+    } else {
+      errors.Groq = 'GROQ_API_KEY is missing';
     }
 
-    // 2. المحاولة الثانية: OpenRouter API (استخدام نموذج Mistral/Qwen المجاني)
+    // 2. OpenRouter API
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     if (openRouterKey) {
       try {
@@ -55,12 +60,15 @@ export async function POST(req) {
         if (res.ok && data.choices?.[0]?.message?.content) {
           return NextResponse.json({ result: data.choices[0].message.content });
         }
+        errors.OpenRouter = data.error?.message || JSON.stringify(data);
       } catch (err) {
-        console.error('OpenRouter error:', err.message);
+        errors.OpenRouter = `Fetch Error: ${err.message}`;
       }
+    } else {
+      errors.OpenRouter = 'OPENROUTER_API_KEY is missing';
     }
 
-    // 3. المحاولة الثالثة: Gemini API
+    // 3. Gemini API
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey) {
       try {
@@ -79,20 +87,27 @@ export async function POST(req) {
         if (res.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
           return NextResponse.json({ result: data.candidates[0].content.parts[0].text });
         }
+        errors.Gemini = data.error?.message || JSON.stringify(data);
       } catch (err) {
-        console.error('Gemini error:', err.message);
+        errors.Gemini = `Fetch Error: ${err.message}`;
       }
+    } else {
+      errors.Gemini = 'GEMINI_API_KEY is missing';
     }
 
+    // إرجاع كائن التفاصيل المباشر
     return NextResponse.json(
-      { error: 'All AI models are currently busy. Please try again in a moment.' },
-      { status: 429 }
+      { 
+        error: 'All AI services failed.',
+        details: errors 
+      },
+      { status: 400 }
     );
 
   } catch (error) {
     return NextResponse.json(
-      { error: `Server error: ${error.message}` },
-      { status: 500 }
+      { error: `Server catch error: ${error.message}` },
+      { status: 400 }
     );
   }
 }
