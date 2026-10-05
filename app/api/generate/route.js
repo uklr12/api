@@ -9,33 +9,27 @@ export async function POST(req) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'GEMINI_API_KEY not found in environment variables' },
+        { error: 'GEMINI_API_KEY غير موجود في متغيرات البيئة' },
         { status: 500 }
       );
     }
 
-    // تهيئة Google Gemini API
     const genAI = new GoogleGenerativeAI(apiKey);
-
-    // استخدام الموديل المستقر وتمرير التعليمات في systemInstruction
+    
+    // استخدام نموذج gemini-1.5-flash المباشر
     const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
       systemInstruction: systemPrompt,
     });
 
-    // إرسال مدخلات المستخدم فقط بشكل مباشر
     const result = await model.generateContent(userInput);
-    const responseText = result.response.text() || 'No response';
+    const responseText = result.response.text();
 
     return NextResponse.json({ result: responseText });
   } catch (error) {
-    console.error('API Error Details:', error);
-    
+    console.error('API Error:', error);
     return NextResponse.json(
-      { 
-        error: `An error occurred: ${error.message}`,
-        details: error.stack
-      },
+      { error: `حدث خطأ: ${error.message}` },
       { status: 500 }
     );
   }
