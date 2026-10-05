@@ -12,7 +12,7 @@ export async function POST(req) {
       );
     }
 
-    // تحديث النموذج إلى gemini-3.8-flash المعتمد حالياً
+    // استدعاء النموذج المعتمد المباشر gemini-3.8-flash
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`,
       {
@@ -36,7 +36,7 @@ export async function POST(req) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Gemini API Error:', data);
+      console.error('Gemini API Error Data:', data);
       return NextResponse.json(
         { error: data.error?.message || 'حدث خطأ في استجابة جوجل' },
         { status: response.status }
