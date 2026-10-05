@@ -62,8 +62,7 @@ export default function HomePage() {
         </header>
 
         {/* Main Interactive Tool */}
-        <ScrollAnimation>
-          <section className="bg-white rounded-2xl shadow-xl p-8 sm:p-10 mb-12 border border-gray-100 relative overflow-hidden">
+        <section className="bg-white rounded-2xl shadow-xl p-8 sm:p-10 mb-12 border border-gray-100 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-400 to-indigo-400 opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
           <div className="relative">
             <div className="flex items-center gap-3 mb-4">
@@ -142,7 +141,6 @@ export default function HomePage() {
             )}
           </div>
         </section>
-        </ScrollAnimation>
 
         {/* Section 2: Other Tools Grid */}
         <ScrollAnimation delay={100}>
@@ -153,7 +151,7 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {tools.slice(1).map((tool, index) => (
-                <ScrollAnimation key={tool.slug} delay={index * 100}>
+                <ScrollAnimation key={tool.slug} delay={index * 50}>
                   <Link
                     href={`/tools/${tool.slug}`}
                     className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 p-6 flex flex-col justify-between transform hover:-translate-y-1"

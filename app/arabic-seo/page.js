@@ -1,7 +1,4 @@
-'use client';
-
 import Link from 'next/link';
-import ScrollAnimation from '../components/ScrollAnimation';
 
 export const metadata = {
   title: 'Building AI Applications with Next.js',
