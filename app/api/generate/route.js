@@ -16,7 +16,7 @@ export async function POST(req) {
 
     // استخدام Google Gemini API
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.0-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `${systemPrompt}\n\nUser: ${userInput}`;
 
