@@ -1,39 +1,12 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(req) {
+  const errors = {};
+
   try {
     const { userInput, systemPrompt } = await req.json();
 
-    // 1. المحاولة الأولى: Gemini API (المزود الأساسي)
-    const geminiKey = process.env.GEMINI_API_KEY;
-    if (geminiKey) {
-      try {
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${geminiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              system_instruction: { parts: [{ text: systemPrompt || '' }] },
-              contents: [{ parts: [{ text: userInput }] }],
-            }),
-          }
-        );
-
-        const data = await res.json();
-
-        // إذا نجح Gemini يرجع النتيجة فوراً
-        if (res.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-          return NextResponse.json({ result: data.candidates[0].content.parts[0].text });
-        }
-
-        console.warn('Gemini quota reached or failed. Falling back to Groq...', data.error?.message);
-      } catch (err) {
-        console.error('Gemini connection error:', err.message);
-      }
-    }
-
-    // 2. المحاولة الثانية: Groq API (الخيار البديل الأول والشرس بالسرعة)
+    // 1. تجربة Groq
     const groqKey = process.env.GROQ_API_KEY;
     if (groqKey) {
       try {
@@ -41,30 +14,30 @@ export async function POST(req) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${groqKey}`,
+            'Authorization': `Bearer ${groqKey.trim()}`,
           },
           body: JSON.stringify({
             model: 'llama-3.3-70b-versatile',
             messages: [
-              { role: 'system', content: systemPrompt || '' },
+              { role: 'system', content: systemPrompt || 'You are a helpful assistant.' },
               { role: 'user', content: userInput },
             ],
           }),
         });
 
         const data = await res.json();
-
         if (res.ok && data.choices?.[0]?.message?.content) {
           return NextResponse.json({ result: data.choices[0].message.content });
         }
-
-        console.warn('Groq failed or rate limited. Falling back to OpenRouter...', data.error?.message);
+        errors.Groq = data.error?.message || JSON.stringify(data);
       } catch (err) {
-        console.error('Groq connection error:', err.message);
+        errors.Groq = `Fetch Error: ${err.message}`;
       }
+    } else {
+      errors.Groq = 'GROQ_API_KEY is missing in Vercel environment variables';
     }
 
-    // 3. المحاولة الثالثة: OpenRouter API (الخيار البديل الثاني)
+    // 2. تجربة OpenRouter
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     if (openRouterKey) {
       try {
@@ -72,7 +45,7 @@ export async function POST(req) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${openRouterKey}`,
+            'Authorization': `Bearer ${openRouterKey.trim()}`,
           },
           body: JSON.stringify({
             model: 'meta-llama/llama-3.3-70b-instruct:free',
@@ -84,24 +57,57 @@ export async function POST(req) {
         });
 
         const data = await res.json();
-
         if (res.ok && data.choices?.[0]?.message?.content) {
           return NextResponse.json({ result: data.choices[0].message.content });
         }
+        errors.OpenRouter = data.error?.message || JSON.stringify(data);
       } catch (err) {
-        console.error('OpenRouter connection error:', err.message);
+        errors.OpenRouter = `Fetch Error: ${err.message}`;
       }
+    } else {
+      errors.OpenRouter = 'OPENROUTER_API_KEY is missing in Vercel environment variables';
     }
 
-    // إذا فشلت جميع المزودات الثلاثة
+    // 3. تجربة Gemini
+    const geminiKey = process.env.GEMINI_API_KEY;
+    if (geminiKey) {
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${geminiKey.trim()}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              system_instruction: { parts: [{ text: systemPrompt || '' }] },
+              contents: [{ parts: [{ text: userInput }] }],
+            }),
+          }
+        );
+
+        const data = await res.json();
+        if (res.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+          return NextResponse.json({ result: data.candidates[0].content.parts[0].text });
+        }
+        errors.Gemini = data.error?.message || JSON.stringify(data);
+      } catch (err) {
+        errors.Gemini = `Fetch Error: ${err.message}`;
+      }
+    } else {
+      errors.Gemini = 'GEMINI_API_KEY is missing in Vercel environment variables';
+    }
+
+    // إرجاع الأخطاء المفصلة لجميع المزودات معاً
     return NextResponse.json(
-      { error: 'All AI models are currently busy. Please try again in a moment.' },
-      { status: 429 }
+      { 
+        error: 'All AI services failed.',
+        details: errors 
+      },
+      { status: 500 }
     );
 
   } catch (error) {
     return NextResponse.json(
-      { error: `Server error: ${error.message}` },
+      { error: `Server catch error: ${error.message}` },
       { status: 500 }
     );
   }
