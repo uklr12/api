@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import tools from '../data/tools.js';
+import SEOContent from './components/SEOContent';
 
 export default function HomePage() {
   return (
@@ -34,6 +35,7 @@ export default function HomePage() {
           ))}
         </div>
       </div>
+      <SEOContent />
     </main>
   );
 }
