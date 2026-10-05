@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(req) {
-  const errors = {};
-
   try {
-    const body = await req.json();
-    const userInput = body?.userInput || '';
-    const systemPrompt = body?.systemPrompt || '';
+    const { userInput, systemPrompt } = await req.json();
 
-    // 1. Groq API
+    // 1. Groq API (محدث بأسماء النماذج المجانية النشطة)
     const groqKey = process.env.GROQ_API_KEY;
     if (groqKey) {
       try {
@@ -19,7 +15,7 @@ export async function POST(req) {
             'Authorization': `Bearer ${groqKey.trim()}`,
           },
           body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
+            model: 'llama3-70b-8192', // النموذج المجاني والشغال في Groq
             messages: [
               { role: 'system', content: systemPrompt || 'You are a helpful assistant.' },
               { role: 'user', content: userInput },
@@ -31,15 +27,12 @@ export async function POST(req) {
         if (res.ok && data.choices?.[0]?.message?.content) {
           return NextResponse.json({ result: data.choices[0].message.content });
         }
-        errors.Groq = data.error?.message || JSON.stringify(data);
       } catch (err) {
-        errors.Groq = `Fetch Error: ${err.message}`;
+        console.error('Groq error:', err.message);
       }
-    } else {
-      errors.Groq = 'GROQ_API_KEY environment variable is missing in Vercel.';
     }
 
-    // 2. OpenRouter API
+    // 2. OpenRouter API (محدث بأسماء النماذج المجانية 100%)
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     if (openRouterKey) {
       try {
@@ -50,7 +43,7 @@ export async function POST(req) {
             'Authorization': `Bearer ${openRouterKey.trim()}`,
           },
           body: JSON.stringify({
-            model: 'meta-llama/llama-3.3-70b-instruct:free',
+            model: 'google/gemini-2.0-flash-exp:free', // نموذج مجاني وممتاز عبر OpenRouter
             messages: [
               { role: 'system', content: systemPrompt || '' },
               { role: 'user', content: userInput },
@@ -62,20 +55,17 @@ export async function POST(req) {
         if (res.ok && data.choices?.[0]?.message?.content) {
           return NextResponse.json({ result: data.choices[0].message.content });
         }
-        errors.OpenRouter = data.error?.message || JSON.stringify(data);
       } catch (err) {
-        errors.OpenRouter = `Fetch Error: ${err.message}`;
+        console.error('OpenRouter error:', err.message);
       }
-    } else {
-      errors.OpenRouter = 'OPENROUTER_API_KEY environment variable is missing in Vercel.';
     }
 
-    // 3. Gemini API
+    // 3. Gemini API (المزود الأساسي)
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey) {
       try {
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${geminiKey.trim()}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey.trim()}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -90,27 +80,20 @@ export async function POST(req) {
         if (res.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
           return NextResponse.json({ result: data.candidates[0].content.parts[0].text });
         }
-        errors.Gemini = data.error?.message || JSON.stringify(data);
       } catch (err) {
-        errors.Gemini = `Fetch Error: ${err.message}`;
+        console.error('Gemini error:', err.message);
       }
-    } else {
-      errors.Gemini = 'GEMINI_API_KEY environment variable is missing in Vercel.';
     }
 
-    // إرجاع الأخطاء مجمعة بحالة 400 بدلاً من 500 ليقرأها المتصفح بوضوح
     return NextResponse.json(
-      { 
-        error: 'All AI services failed to execute.',
-        details: errors 
-      },
-      { status: 400 }
+      { error: 'All AI models are currently busy. Please try again in a moment.' },
+      { status: 429 }
     );
 
   } catch (error) {
     return NextResponse.json(
-      { error: `Server internal crash: ${error.message}` },
-      { status: 400 }
+      { error: `Server error: ${error.message}` },
+      { status: 500 }
     );
   }
 }
