@@ -11,6 +11,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <meta name="google-site-verification" content="vlitXfG8D5yMX-IFKwWP0ClVi5LZ_cvdT_q_XcBiENI" />
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8923599814798789" crossorigin="anonymous"></script>
       </head>
       <body>
         {children}
